@@ -1,0 +1,21 @@
+[
+    {
+        "name": "Bakhtiar",
+        "nationality": "FIN",
+        "assists": 35,
+        "goals": 28,
+        "penalties": 22,
+        "team": "TRK",
+        "games": 68
+    },
+    {
+        "name": "Ismail",
+        "nationality": "IRQ",
+        "assists": 25,
+        "goals": 18,
+        "penalties": 15,
+        "team": "ERL",
+        "games": 70
+    },
+    
+]
