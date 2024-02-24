@@ -1,4 +1,4 @@
-from Mammal import Mammal
+from Mammal_ import Mammal
 
 class Player:
     def __init__(self, name, player_id):
