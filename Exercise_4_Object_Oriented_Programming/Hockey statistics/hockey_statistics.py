@@ -1,88 +1,85 @@
 import json
 
-class Player:
-    def __init__(self, name, nationality, assists, goals, penalties, team, games):
-        self.name = name
-        self.nationality = nationality
-        self.assists = assists
-        self.goals = goals
-        self.penalties = penalties
-        self.team = team
-        self.games = games
+class HockeyPlayer:
+    def __init__(self, player_stats: dict) -> None:
+        self.__stats = player_stats
+    
+    @property
+    def name(self) -> str:
+        return self.__stats['name']
 
-    def points(self):
+    @property
+    def team(self) -> str:
+        return self.__stats['team']
+
+    @property
+    def nationality(self) -> str:
+        return self.__stats['nationality']
+
+    @property
+    def goals(self) -> int:
+        return self.__stats['goals']
+
+    @property
+    def assists(self) -> int:
+        return self.__stats['assists']
+
+    @property
+    def points(self) -> int:
         return self.goals + self.assists
 
-    def __str__(self):
-        return f"{self.name:<20}{self.team:>5}{self.goals:>3} + {self.assists:>3} = {self.points():>3}"
+    @property
+    def games(self) -> int:
+        return self.__stats['games']
 
-class NHLStats:
-    def __init__(self, file_name):
-        self.players = []
-        self.load_data(file_name)
+    def __str__(self) -> str:
+        return f"{self.name:20} {self.team} {self.goals:3} + {self.assists:2} = {self.points:3}"
 
-    def load_data(self, file_name):
-        try:
-            with open(file_name, 'r') as file:
-                data = json.load(file)
-                for player_data in data:
-                    player = Player(**player_data)
-                    self.players.append(player)
-                print(f"read the data of {len(self.players)} players")
-        except FileNotFoundError:
-            print("File not found.")
+class PlayerStatistics:
+    def __init__(self) -> None:
+        self.__players = {}
 
-    def search_player(self, name):
-        for player in self.players:
-            if player.name == name:
-                print(player)
-                return
-        print("Player not found.")
+    @property
+    def players(self) -> dict:
+        return self.__players
 
-    def list_teams(self):
-        teams = sorted(set(player.team for player in self.players))
-        for team in teams:
-            print(team)
+    def search_for_player(self, name: str) -> HockeyPlayer:
+        return self.players.get(name)
 
-    def list_countries(self):
-        countries = sorted(set(player.nationality for player in self.players))
-        for country in countries:
-            print(country)
+    def add_player(self, player_stats: dict) -> None:
+        player = HockeyPlayer(player_stats)
+        self.players[player.name] = player
 
-    def list_players_in_team(self, team):
-        team_players = [player for player in self.players if player.team == team]
-        if team_players:
-            sorted_players = sorted(team_players, key=lambda player: player.points(), reverse=True)
-            for player in sorted_players:
-                print(player)
-        else:
-            print("No players found for the team.")
+    def teams(self) -> list:
+        return sorted(set(player.team for player in self.players.values()))
 
-    def list_players_from_country(self, country):
-        country_players = [player for player in self.players if player.nationality == country]
-        if country_players:
-            sorted_players = sorted(country_players, key=lambda player: player.points(), reverse=True)
-            for player in sorted_players:
-                print(player)
-        else:
-            print("No players found from the country.")
+    def countries(self) -> list:
+        return sorted(set(player.nationality for player in self.players.values()))
 
-    def most_points(self, n):
-        sorted_players = sorted(self.players, key=lambda player: (player.points(), player.goals), reverse=True)[:n]
-        for player in sorted_players:
-            print(player)
+    def players_in_team(self, team: str) -> list:
+        team_players = [player for player in self.players.values() if player.team == team]
+        return sorted(team_players, key=lambda x: x.points, reverse=True)
 
-    def most_goals(self, n):
-        sorted_players = sorted(self.players, key=lambda player: (player.goals, player.games))[:n]
-        for player in sorted_players:
-            print(player)
+    def players_from_country(self, country: str) -> list:
+        country_players = [player for player in self.players.values() if player.nationality == country]
+        return sorted(country_players, key=lambda x: x.points, reverse=True)
 
-def main():
-    file_name = input("file name: ")
-    stats = NHLStats(file_name)
+    def players_with_most_points(self, number: int) -> list:
+        return sorted(self.players.values(), key=lambda x: (x.points, x.goals), reverse=True)[:number]
+    
+    def players_with_most_goals(self, number: int) -> list:
+        return sorted(self.players.values(), key=lambda x: (x.goals, -x.games), reverse=True)[:number]
 
-    while True:
-        print("\ncommands:")
+class HockeyStatisticsApplication:
+    def __init__(self) -> None:
+        self.__stats = PlayerStatistics()
+    
+    @property
+    def stats(self) -> PlayerStatistics:
+        return self.__stats
+
+    def help(self) -> None:
+        print("commands:")
         print("0 quit")
         print("1 search for player")
         print("2 teams")
@@ -92,31 +89,120 @@ def main():
         print("6 most points")
         print("7 most goals")
 
-        command = input("command: ")
+    def read_data(self, filename: str) -> None:
+        try:
+            with open(filename) as file:
+                season = json.load(file)
+                player_count = 0
+                for player_stats in season:
+                    self.stats.add_player(player_stats)
+                    player_count += 1
+                print(f"read the data of {player_count} players")
+        except FileNotFoundError:
+            print("File not found.")
 
-        if command == "0":
-            break
-        elif command == "1":
-            name = input("name: ")
-            stats.search_player(name)
-        elif command == "2":
-            stats.list_teams()
-        elif command == "3":
-            stats.list_countries()
-        elif command == "4":
-            team = input("team: ")
-            stats.list_players_in_team(team)
-        elif command == "5":
-            country = input("country: ")
-            stats.list_players_from_country(country)
-        elif command == "6":
-            n = int(input("how many: "))
-            stats.most_points(n)
-        elif command == "7":
-            n = int(input("how many: "))
-            stats.most_goals(n)
+    def search_for_player(self) -> None:
+        """Search by name for a single player's stats and print it
+        """
+        name = input("name: ")
+        player = self.stats.search_for_player(name)
+        if player:
+            print(player)
         else:
-            print("Invalid command.")
+            print("Player not found.")
 
-if __name__ == "__main__":
-    main()
+    def print_teams(self) -> None:
+        """Retrieve the list of all the abbreviations for team names in alphabetical order and print it
+        """
+        teams = self.stats.teams()
+        for team in teams:
+            print(team)
+
+    def print_countries(self) -> None:
+        """Retrieve the list of all the abbreviations for countries in alphabetical order
+        Print the list
+        """
+        countries = self.stats.countries()
+        for country in countries:
+            print(country)
+    
+    def players_in_team(self) -> None:
+        """Retrieve the list of players in a specific team 
+        Print them in the order of points scored, from highest to lowest 
+        Points equals goals + assists
+        """
+        team = input("team: ")
+        players = self.stats.players_in_team(team)
+        if players:
+            for player in players:
+                print(player)
+        else:
+            print("No players found for the team.")
+
+    def players_from_country(self) -> None:
+        """Retrieve the list of players from a specific country
+        Print them in the order of points scored, from highest to lowest
+        """
+        country = input("country: ")
+        players = self.stats.players_from_country(country)
+        if players:
+            for player in players:
+                print(player)
+        else:
+            print("No players found from the country.")
+
+    def most_points(self) -> None:
+        """Retrieve the list of input number of players who've scored the most points and print them
+        If two players have the same score, whoever has scored the higher number of goals comes first
+        """
+        number = int(input("how many: "))
+        players = self.stats.players_with_most_points(number)
+        if players:
+            for player in players:
+                print(player)
+        else:
+            print("No players found.")
+
+    def most_goals(self) -> None:
+        """Retrieve the list of input number of players who've scored the most goals and print them
+        If two players have the same number of goals, whoever has played the lower number of games comes first
+        """
+        number = int(input("how many: "))
+        players = self.stats.players_with_most_goals(number)
+        if players:
+            for player in players:
+                print(player)
+        else:
+            print("No players found.")
+
+
+    def execute(self) -> None:
+        filename = input("file name: ")
+        self.read_data(filename)
+        print()
+        self.help()
+        while True:
+            print()
+            command = input("command: ")
+            if command == "0":
+                break
+            elif command == "1":
+                self.search_for_player()
+            elif command == "2":
+                self.print_teams()
+            elif command == "3":
+                self.print_countries()
+            elif command == "4":
+                self.players_in_team()
+            elif command == "5":
+                self.players_from_country()
+            elif command == "6":
+                self.most_points()
+            elif command == "7":
+                self.most_goals()
+            else:
+                self.help()
+            
+
+application = HockeyStatisticsApplication()
+application.execute()
