@@ -3,13 +3,9 @@ import random
 class Dice:
     def __init__(self, sides=6):
         self.sides = sides
-        self.value = None
 
     def roll(self):
-        self.value = random.randint(1, self.sides)
-
-    def show_side(self):
-        return self.value
+        return random.randint(1, self.sides)
 
 class Player:
     def __init__(self, name, player_id):
@@ -18,45 +14,40 @@ class Player:
         self.dice = Dice()
 
     def roll_dice(self):
-        self.dice.roll()
-
-    def get_dice_side(self):
-        return self.dice.show_side()
+        return self.dice.roll()
 
     def __str__(self):
-        return f"Player {self.name}, ID: {self.player_id}"
+        return f"Player {self.name} (ID: {self.player_id})"
+
+def play_dice_game(players):
+    while True:
+        player_scores = {}
+        for player in players:
+            score = sum(player.roll_dice() for _ in range(3))
+            player_scores[player] = score
+            print(f"{player}: {score}")
+
+        max_score = max(player_scores.values())
+        winners = [player for player, score in player_scores.items() if score == max_score]
+
+        if len(winners) == 1:
+            print(f"\nWinner: {winners[0]} with a score of {max_score}")
+            break
+        else:
+            print("Tie! Rolling again...")
+            continue
 
 def main():
-    # Part 1
-    print("Part 1: Simple dice game")
-    players = [Player("Player 1", 1), Player("Player 2", 2), Player("Player 3", 3)]
-
-    for player in players:
-        player.roll_dice()
-        print(f"{player.name} rolled {player.get_dice_side()}")
-
-    # Part 2
-    print("\nPart 2: Add dices")
-    num_dices = int(input("Enter the number of dices: "))
-    players = [Player(f"Player {i}", i) for i in range(1, num_dices + 1)]
-
-    for player in players:
-        player.roll_dice()
-        print(f"{player.name} rolled {player.get_dice_side()}")
-
-    # Part 3
-    print("\nPart 3: Add Players")
-    players_dict = {}
     num_players = int(input("Enter the number of players: "))
-
+    players = []
     for i in range(1, num_players + 1):
         name = input(f"Enter name for Player {i}: ")
-        player = Player(name, i)
-        player.roll_dice()
-        print(f"{player.name} rolled {player.get_dice_side()}")
-        players_dict[player.player_id] = player
+        player_id = i
+        players.append(Player(name, player_id))
 
-    # Part 4
+    play_dice_game(players)
+
+    # Part 4: Create a mammal object
     class Mammal:
         def __init__(self, ID, species, name, size, weight):
             self.ID = ID
@@ -65,24 +56,28 @@ def main():
             self.size = size
             self.weight = weight
 
-    # Part 5
-    print("\nPart 5: Add a pet mammal to each player")
-    for player_id, player in players_dict.items():
-        pet = Mammal(player_id, "Dog", "Fido", "Medium", "20kg")
-        player.pet = pet
-        print(f"{player.name}'s pet is {player.pet.name}, a {player.pet.species} weighing {player.pet.weight}")
+    # Part 5: Add pet attribute to Player class
+    for player in players:
+        player.pet = Mammal(player.player_id, "Mammal", f"{player.name}'s pet", random.randint(10, 50), random.randint(5, 30))
 
-    # Part 6
-    print("\nPart 6: Select pet mammal using dice roll")
-    for player_id, player in players_dict.items():
-        player.roll_dice()
-        dice_sum = player.get_dice_side()
-        if dice_sum > 7:
-            pet = Mammal(player_id, "Elephant", "Dumbo", "Large", "1000kg")
+    # Part 6: Let players select their pet mammal
+    print("\nSelecting pets based on dice rolls:")
+    for player in players:
+        pet_roll = sum(player.roll_dice() for _ in range(2))
+        print(f"{player}: Rolled {pet_roll} for pet selection")
+        if pet_roll > 7:
+            player.pet.species = "Elephant"
+            player.pet.size = 50
+            player.pet.weight = 500
         else:
-            pet = Mammal(player_id, "Cat", "Whiskers", "Small", "5kg")
-        player.pet = pet
-        print(f"{player.name}'s pet is {player.pet.name}, a {player.pet.species} weighing {player.pet.weight}")
+            player.pet.species = "Rabbit"
+            player.pet.size = 10
+            player.pet.weight = 15
+
+    # Print each player and their pet information
+    print("\nPlayers and their pets:")
+    for player in players:
+        print(f"{player}: {player.pet.species} named {player.pet.name}, size: {player.pet.size}, weight: {player.pet.weight}")
 
 if __name__ == "__main__":
     main()
